@@ -1,6 +1,6 @@
 /**
  * @name UserVoiceShow
- * @author xmnlz
+ * @author xmnlz, imafrogowo
  * @description The UserVoiceShow plugin allows you to find out the voice channel where the user is sitting.
  * @version 1.1.6
  * @authorLink https://github.com/xmlnz
@@ -230,7 +230,7 @@ function buildPlugin([BasePlugin, Library]) {
 	
 		// components/SettingsPanel/SettingsPanel.tsx
 		const { getModule } = betterdiscord.Webpack;
-		const SwitchItem = getModule((m) => m.toString().includes("helpdeskArticleId"));
+		const SwitchItem = ZeresPluginLibrary.DiscordModules.SwitchRow
 		const SettingsPanel = () => {
 			const [profileModal, setProfileModal] = react.useState(settings.useProfileModal);
 			const [showCategory, setShowCategory] = react.useState(settings.useShowCategory);
@@ -263,12 +263,13 @@ function buildPlugin([BasePlugin, Library]) {
 		var css = ".voiceChannelField {\r\n  	margin: 5px 0px;\r\n  	text-align: center;\r\n  	padding: 5px;\r\n  	color: #fff !important;\r\n  	font-size: 16px !important;\r\n  	border-radius: 7px;\r\n  	/* Fix \\n */\r\n  	white-space: pre-wrap;\r\n  	/* Fix colors in light profile */\r\n  	mix-blend-mode: screen;\r\n}\r\n\r\n.voiceChannelField:hover {\r\n  	background: #06c;\r\n  	cursor: pointer;\r\n}\r\n\r\n.voiceChannelList {\r\n  	padding: 5px;\r\n}\r\n";
 	
 		// main.tsx
-		const { __getLocalVars } = zlibrary.WebpackModules.getByProps("getVoiceStateForUser");
+		// const { __getLocalVars } = zlibrary.WebpackModules.getByProps("getVoiceStateForUser");
 		const { UserStore } = zlibrary.DiscordModules;
 		const { getModuleWithKey } = WebpackUtils;
 		const {
 			Filters: { byStrings }
 		} = betterdiscord.Webpack;
+    const vc = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("getVoiceStateForUser"))
 		class UserVoiceShow extends BasePlugin {
 			constructor() {
 				super();
@@ -297,13 +298,12 @@ function buildPlugin([BasePlugin, Library]) {
 					const isCurrentUser = userId === UserStore.getCurrentUser().id;
 					if (isCurrentUser)
 						return ret;
-					const voiceState = __getLocalVars().users[userId];
+					const voiceState = vc?.getVoiceStateForUser(userId) // __getLocalVars().users[userId]; // Discord removed this. 
+          //console.log(Object.entries(voiceState))
 					if (!voiceState || isEmpty(voiceState))
 						return ret;
-					for (const [_2, voice] of Object.entries(voiceState)) {
-						const { channelId } = voice;
-						channelList.push(channelId);
-					}
+						const channel = voiceState['channelId']
+						channelList.push(channel);
 					ret.props.children.push(BdApi.React.createElement(VoiceChannelList, { channelList }));
 				});
 			}
@@ -313,17 +313,13 @@ function buildPlugin([BasePlugin, Library]) {
 					const { useProfileModal } = settings.useSettingsState();
 					if (!useProfileModal)
 						return ret;
-					if (profileType === 0)
-						return ret;
 					const channelList = [];
-					const voiceState = __getLocalVars().users[user.id];
+					const voiceState = vc?.getVoiceStateForUser(user.id)// __getLocalVars().users[user.id]; Again, // Discord removed this. 
 					if (!voiceState || isEmpty(voiceState))
 						return ret;
-					for (const [_2, voice] of Object.entries(voiceState)) {
-						const { channelId } = voice;
-						channelList.push(channelId);
-					}
-					ret.props.children().props.children.props.children.props.children.splice(
+          const channel = voiceState['channelId']
+          channelList.push(channel);
+					ret.props.children.props.children.props.children[1].props.children.push(
 						1,
 						0,
 						BdApi.React.createElement(VoiceChannelList, { channelList })
